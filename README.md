@@ -10,7 +10,10 @@ will run the Logistic regression interface I wrote that allows the basic functio
 
 The folder **datasets** should be populated with any datasets we want to use, as the program will ask for its contents, and also the final results will be stored there.
 
-We'll discuss more on Thursday.
+TODO:
+- [ ] Validation / Cross-Validation
+- [ ] Metrics
+- [ ] Codebase cleanup
 
 
 
