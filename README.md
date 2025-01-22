@@ -12,19 +12,32 @@ The folder **datasets** should be populated with any datasets we want to use, as
 
 TODO:
 - [ ] Validation / Cross-Validation
-- [ ] Metrics
+- [ ] detect overfitting / underfitting
+- [x] Metrics
 - [x] Codebase cleanup
-- [ ] one-hot encoding not by sklearn
+- [x] one-hot encoding not by sklearn
 
 Results from the first run:
-Accuracy: 77.31%
+Accuracy: 0.77
 Precision: 0.75
 Recall: 0.78
 F1 Score: 0.76
 ROC-AUC: 0.77
+Log Loss: 7.84
 Confusion Matrix:
 [[276  82]
  [ 70 242]]
+
+Results after deuselessification:
+Accuracy: 0.77
+Precision: 0.75
+Recall: 0.77
+F1 Score: 0.76
+ROC-AUC: 0.77
+Log Loss: 7.89
+Confusion Matrix:
+[[276  82]
+ [ 71 241]]
 
 
 

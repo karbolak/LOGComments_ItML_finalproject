@@ -1,10 +1,11 @@
 import os
 import pickle
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
+import numpy as np
 from ml.functional_feature import detect_feature_types
 from ml.logistic_regression import LogisticRegression
+from ml.metric import Accuracy, Precision, Recall, F1Score, ConfusionMatrix, ROCAUC, LogLoss
+from ml.one_hot_encoder import OneHotEncoder
 
 def load_dataset(file_path):
     """Loads a dataset from a CSV file."""
@@ -33,12 +34,14 @@ def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_t
 
     for feature in input_features:
         name = feature.name
+        column_data = dataset[[name]].values
+
         if dataset_type == "training":
             # Create and fit encoder during training
-            encoder = OneHotEncoder(categories="auto", sparse_output=True, handle_unknown="ignore")
-            encoder.fit(dataset[[name]])
+            encoder = OneHotEncoder()
+            encoder.fit(column_data)
             train_artifacts[name] = {"type": "OneHotEncoder", "encoder": encoder}
-            data = encoder.transform(dataset[[name]]).toarray()
+            data = encoder.transform(column_data)
         else:
             # Use the fitted encoder from artifacts during prediction
             artifact = train_artifacts.get(name)
@@ -47,7 +50,7 @@ def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_t
                 continue
             if artifact["type"] == "OneHotEncoder":
                 encoder = artifact["encoder"]
-                data = encoder.transform(dataset[[name]]).toarray()
+                data = encoder.transform(column_data)
             else:
                 print(f"Unsupported artifact type for feature '{name}'. Skipping this feature.")
                 continue
@@ -61,8 +64,19 @@ def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_t
 
     return pd.concat(processed_frames, axis=1).values
 
-def run_pipeline(directory="datasets"):
+def wipe_artifacts(directory):
+    """Deletes all files in the artifacts directory."""
+    for filename in os.listdir(directory):
+        file_path = os.path.join(directory, filename)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
+def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
     """Runs an interactive pipeline for Logistic Regression."""
+    # Ensure artifacts directory exists
+    if not os.path.exists(artifacts_dir):
+        os.makedirs(artifacts_dir)
+
     # Select and load training dataset
     print("Select the training dataset:")
     train_dataset_path = select_dataset(directory)
@@ -97,7 +111,8 @@ def run_pipeline(directory="datasets"):
     y_train = train_dataset[target_column].values
 
     # Save training artifacts
-    with open("train_artifacts.pkl", "wb") as f:
+    artifacts_path = os.path.join(artifacts_dir, "train_artifacts.pkl")
+    with open(artifacts_path, "wb") as f:
         pickle.dump(train_artifacts, f)
 
     # Train the model
@@ -106,7 +121,8 @@ def run_pipeline(directory="datasets"):
     model.fit(X_train, y_train)
 
     # Save the trained model
-    with open("trained_model.pkl", "wb") as f:
+    model_path = os.path.join(artifacts_dir, "trained_model.pkl")
+    with open(model_path, "wb") as f:
         pickle.dump(model, f)
 
     # Select and load prediction dataset
@@ -116,7 +132,7 @@ def run_pipeline(directory="datasets"):
     print(f"Loaded prediction dataset: {prediction_dataset_path}")
 
     # Load training artifacts
-    with open("train_artifacts.pkl", "rb") as f:
+    with open(artifacts_path, "rb") as f:
         train_artifacts = pickle.load(f)
 
     # Ensure target column is excluded from input features
@@ -135,20 +151,46 @@ def run_pipeline(directory="datasets"):
 
     # Calculate metrics
     print("Calculating metrics...")
-    accuracy = (predictions == original_target).mean()
-    precision = precision_score(original_target, predictions)
-    recall = recall_score(original_target, predictions)
-    f1 = f1_score(original_target, predictions)
-    roc_auc = roc_auc_score(original_target, predictions)
-    conf_matrix = confusion_matrix(original_target, predictions)
+    accuracy_metric = Accuracy()
+    precision_metric = Precision()
+    recall_metric = Recall()
+    f1_score_metric = F1Score()
+    confusion_matrix_metric = ConfusionMatrix()
+    roc_auc_metric = ROCAUC()
+    log_loss_metric = LogLoss()
 
+    accuracy = accuracy_metric(original_target, predictions)
+    precision = precision_metric(original_target, predictions)
+    recall = recall_metric(original_target, predictions)
+    f1_score = f1_score_metric(original_target, predictions)
+    confusion_matrix = confusion_matrix_metric(original_target, predictions)
+    roc_auc = roc_auc_metric(original_target, predictions)
+    log_loss = log_loss_metric(original_target, predictions)
+
+    print("---------")
+    print("The percentage of all correct predictions (TP + TN) out of the total predictions.")
     print(f"Accuracy: {accuracy * 100:.2f}%")
-    print(f"Precision: {precision:.2f}")
-    print(f"Recall: {recall:.2f}")
-    print(f"F1 Score: {f1:.2f}")
+    print("---------")
+    print("Out of all predicted positives, x% were actually positive.")
+    print(f"Precision: {precision * 100:.2f}%")
+    print("---------")
+    print("Out of all actual positives, x% were correctly identified.")
+    print(f"Recall: {recall * 100:.2f}%")
+    print("---------")
+    print("The harmonic mean of precision and recall.")
+    print(f"F1 Score: {f1_score:.2f}")
+    print("---------")
     print(f"ROC-AUC: {roc_auc:.2f}")
+    print("Measures the ability of your model to separate classes. A score of 0.5 means random guessing, and closer to 1 is better.")
+    print("---------")
+    print(f"Log Loss: {log_loss:.2f}")
+    print("The penalty for how far off your predicted probabilities are from the true labels. 0.1 - 1 is normal")
+    print("---------")
     print("Confusion Matrix:")
-    print(conf_matrix)
+    print(confusion_matrix)
+    print("[[TP   FP]")
+    print(" [FP   FN]")
+    print("---------")
 
     # Save predictions
     prediction_dataset[target_column] = predictions
@@ -156,9 +198,14 @@ def run_pipeline(directory="datasets"):
     prediction_dataset.to_csv(output_file, index=False)
     print(f"Predictions saved to {output_file}")
 
+    # Wipe artifacts
+    print("Cleaning up artifacts...")
+    wipe_artifacts(artifacts_dir)
+
 if __name__ == "__main__":
-    # Default datasets directory
+    # Default datasets and artifacts directories
     datasets_directory = "datasets"
+    artifacts_directory = "artifacts"
 
     # Ensure the datasets directory exists
     if not os.path.exists(datasets_directory):
@@ -166,4 +213,4 @@ if __name__ == "__main__":
         print(f"Created directory for datasets: {datasets_directory}")
 
     # Run the pipeline
-    run_pipeline(directory=datasets_directory)
+    run_pipeline(directory=datasets_directory, artifacts_dir=artifacts_directory)
