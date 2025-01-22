@@ -1,6 +1,6 @@
 from typing import List, Union
-from autoop.core.ml.dataset import Dataset
-from autoop.core.ml.feature import Feature
+from ml.dataset import Dataset
+from ml.feature import Feature
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 

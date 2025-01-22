@@ -13,7 +13,18 @@ The folder **datasets** should be populated with any datasets we want to use, as
 TODO:
 - [ ] Validation / Cross-Validation
 - [ ] Metrics
-- [ ] Codebase cleanup
+- [x] Codebase cleanup
+- [ ] one-hot encoding not by sklearn
+
+Results from the first run:
+Accuracy: 77.31%
+Precision: 0.75
+Recall: 0.78
+F1 Score: 0.76
+ROC-AUC: 0.77
+Confusion Matrix:
+[[276  82]
+ [ 70 242]]
 
 
 

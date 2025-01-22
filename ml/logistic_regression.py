@@ -1,5 +1,5 @@
 import numpy as np
-from autoop.core.ml.model import Model
+from ml.model import Model
 
 
 class LogisticRegression(Model):

@@ -2,23 +2,17 @@ import os
 import pickle
 import pandas as pd
 from sklearn.preprocessing import OneHotEncoder
-from autoop.functional.feature import detect_feature_types
-from autoop.core.ml.model.classification.logistic_regression import LogisticRegression
-
-
-def list_datasets(directory="datasets"):
-    """Lists available dataset files in a directory."""
-    return [f for f in os.listdir(directory) if f.endswith(".csv")]
-
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
+from ml.functional_feature import detect_feature_types
+from ml.logistic_regression import LogisticRegression
 
 def load_dataset(file_path):
     """Loads a dataset from a CSV file."""
     return pd.read_csv(file_path)
 
-
 def select_dataset(directory="datasets"):
     """Prompts the user to select a dataset from a list."""
-    datasets = list_datasets(directory)
+    datasets = [f for f in os.listdir(directory) if f.endswith(".csv")]
     if not datasets:
         raise ValueError(f"No CSV datasets found in '{directory}' directory.")
     
@@ -31,7 +25,6 @@ def select_dataset(directory="datasets"):
         raise ValueError("Invalid choice. Please select a valid dataset.")
     
     return os.path.join(directory, datasets[choice])
-
 
 def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_type="training"):
     """Preprocess and transform features using artifacts."""
@@ -67,7 +60,6 @@ def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_t
         raise ValueError(f"No features were processed for the {dataset_type} dataset. Check feature alignment.")
 
     return pd.concat(processed_frames, axis=1).values
-
 
 def run_pipeline(directory="datasets"):
     """Runs an interactive pipeline for Logistic Regression."""
@@ -108,11 +100,6 @@ def run_pipeline(directory="datasets"):
     with open("train_artifacts.pkl", "wb") as f:
         pickle.dump(train_artifacts, f)
 
-    # Debugging: Display stored artifacts
-    print("\nArtifacts created during training:")
-    for name, artifact in train_artifacts.items():
-        print(f"Feature: {name}, Encoder Categories: {artifact['encoder'].categories_}")
-
     # Train the model
     print("Training Logistic Regression model...")
     model = LogisticRegression(learning_rate=0.01, n_iterations=1000)
@@ -132,6 +119,13 @@ def run_pipeline(directory="datasets"):
     with open("train_artifacts.pkl", "rb") as f:
         train_artifacts = pickle.load(f)
 
+    # Ensure target column is excluded from input features
+    if target_column in prediction_dataset.columns:
+        original_target = prediction_dataset[target_column].values
+        prediction_dataset = prediction_dataset.drop(columns=[target_column])
+    else:
+        raise ValueError("Target column missing in the prediction dataset.")
+
     # Preprocess prediction dataset
     X_pred = preprocess_and_transform(prediction_dataset, input_features, train_artifacts, dataset_type="prediction")
 
@@ -139,14 +133,28 @@ def run_pipeline(directory="datasets"):
     print("Generating predictions...")
     predictions = model.predict(X_pred)
 
-    # Add predictions to the prediction dataset
-    prediction_dataset["Predictions"] = predictions
+    # Calculate metrics
+    print("Calculating metrics...")
+    accuracy = (predictions == original_target).mean()
+    precision = precision_score(original_target, predictions)
+    recall = recall_score(original_target, predictions)
+    f1 = f1_score(original_target, predictions)
+    roc_auc = roc_auc_score(original_target, predictions)
+    conf_matrix = confusion_matrix(original_target, predictions)
 
-    # Save the updated dataset with predictions
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+    print(f"Precision: {precision:.2f}")
+    print(f"Recall: {recall:.2f}")
+    print(f"F1 Score: {f1:.2f}")
+    print(f"ROC-AUC: {roc_auc:.2f}")
+    print("Confusion Matrix:")
+    print(conf_matrix)
+
+    # Save predictions
+    prediction_dataset[target_column] = predictions
     output_file = os.path.join(directory, "predictions_with_results.csv")
     prediction_dataset.to_csv(output_file, index=False)
     print(f"Predictions saved to {output_file}")
-
 
 if __name__ == "__main__":
     # Default datasets directory

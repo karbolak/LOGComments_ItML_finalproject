@@ -1,4 +1,4 @@
-from autoop.core.ml.artifact import Artifact
+from ml.artifact import Artifact
 import pandas as pd
 import io
 
