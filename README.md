@@ -16,6 +16,15 @@ TODO:
 - [x] Metrics
 - [x] Codebase cleanup
 - [x] one-hot encoding not by sklearn
+- [ ] regularisation to combat overfitting
+
+Okay, it seems that we are not using cv for adjustments, and k-fold.
+Problem -> the learning curves are fucked up.
+We should implement regularisation.
+We no longer rely on artifacts saved, we should fix it.
+We have to cleanup the whale of logreg, split in etc.
+Parameter tuning etc.
+
 
 Results from the first run:
 Accuracy: 0.77
@@ -38,6 +47,26 @@ Log Loss: 7.89
 Confusion Matrix:
 [[276  82]
  [ 71 241]]
+
+
+---------
+The percentage of all correct predictions (TP + TN) out of the total predictions
+---------
+Precision -> Out of all predicted positives, x% were actually positive.
+---------
+Recall -> Out of all actual positives, x% were correctly identified.
+---------
+F1 Score -> The harmonic mean of precision and recall.
+---------
+ROC-AUC -> Measures the ability of your model to separate classes. A score of 0.5 means random guessing, and closer to 1 is better.
+---------
+Log Loss -> The penalty for how far off your predicted probabilities are from the true labels. 0.1 - 1 is normal
+---------
+Confusion Matrix:
+    confusion_matrix
+    [TP   FP]"
+    [FP   FN]
+---------
 
 
 
