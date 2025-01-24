@@ -3,7 +3,7 @@
 Base is oop project at an early stage, most of it is useless (see the whole app subfolder) but I did not want to bother with removing it and fixing the errors, that can be done later.
 
 ```console
-python logreg.py
+python main.py
 ```
 
 will run the Logistic regression interface I wrote that allows the basic functioning needed for our purposes.
@@ -17,6 +17,8 @@ TODO:
 - [x] Codebase cleanup
 - [x] one-hot encoding not by sklearn
 - [x] regularisation to combat overfitting
+- [x] introduced epochs
+- [ ] add percentage progress during training
 - [ ] check what hyperparameter values are selected (print)
 - [ ] check if changing accuracy to F1 will improve the results
 - [ ] introduce learning rate decay
