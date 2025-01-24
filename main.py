@@ -1,7 +1,8 @@
 import os
 import pandas as pd
+import numpy as np
 from ml.cross_validation import CrossValidator
-from ml.learning_curve import LearningCurve, plot_learning_curves
+from ml.learning_curve import plot_learning_curves
 from ml.functional_feature import detect_feature_types
 from ml.logistic_regression import LogisticRegression
 from ml.metric import Accuracy, Precision, Recall, F1Score, ConfusionMatrix, ROCAUC, LogLoss
@@ -26,6 +27,32 @@ def select_dataset(directory="datasets"):
         raise ValueError("Invalid choice. Please select a valid dataset.")
     
     return os.path.join(directory, datasets[choice])
+
+def train_validation_split(X, y, val_size=0.2, random_seed=42):
+    """
+    Splits the dataset into training and validation sets.
+
+    Args:
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray): Target vector.
+        val_size (float): Proportion of the data to use as validation (0 < val_size < 1).
+        random_seed (int): Random seed for reproducibility.
+
+    Returns:
+        tuple: (X_train, X_val, y_train, y_val)
+    """
+    np.random.seed(random_seed)
+    indices = np.arange(X.shape[0])
+    np.random.shuffle(indices)
+
+    split_idx = int(len(indices) * (1 - val_size))
+    train_indices, val_indices = indices[:split_idx], indices[split_idx:]
+
+    X_train, X_val = X[train_indices], X[val_indices]
+    y_train, y_val = y[train_indices], y[val_indices]
+
+    return X_train, X_val, y_train, y_val
+
 
 def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_type="training"):
     """Preprocess and transform features using artifacts."""
@@ -108,31 +135,23 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
 
     # Use best parameters for the final model
     print("\nTraining final Logistic Regression model with best parameters...")
+    # Split the dataset for validation during final training
+    X_train, X_val, y_train, y_val = train_validation_split(X_train, y_train, val_size=0.2)
+
+    # Train the final model
     final_model = LogisticRegression(
         learning_rate=best_params['learning_rate'],
         n_iterations=best_params['n_iterations'],
         regularization=best_params['regularization'],
         epochs=10,
         decay_type=best_params['decay_type'],
-        decay_rate=best_params['decay_rate'],
+        decay_rate=best_params['decay_rate']
     )
-    final_model.fit(X_train, y_train)
+    final_model.fit(X_train, y_train, validation_data=(X_val, y_val))
     print("Final model training complete.")
-
-
-    # Generate learning curve
-    learning_curve = LearningCurve(
-        model_class=LogisticRegression,
-        learning_rate=best_params['learning_rate'],
-        n_iterations=best_params['n_iterations'],
-        regularization=best_params['regularization'],
-        epochs=10,
-        decay_type=best_params['decay_type'],
-        decay_rate=best_params['decay_rate'],
-    )
     
-    epochs, train_losses, val_losses = learning_curve.generate(X_train, y_train)
-    plot_learning_curves(epochs, train_losses, val_losses)
+    plot_learning_curves(final_model.train_losses, final_model.val_losses)
+
     
     # Prediction pipeline (rest of the existing code)
     print("\nSelect the prediction dataset:")

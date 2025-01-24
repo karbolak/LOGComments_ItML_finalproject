@@ -114,6 +114,17 @@ Confustion Matrix:
 [[292  66]
  [ 60 252]]
 
+Model Performance Metrics:
+Accuracy: 0.8433
+Precision: 0.8657
+Recall: 0.7853
+F1 Score: 0.8235
+ROC-AUC: 0.8413
+Log Loss: 5.4128
+Confustion Matrix: 
+[[320  38]
+ [ 67 245]]
+
 
 ---------
 The percentage of all correct predictions (TP + TN) out of the total predictions

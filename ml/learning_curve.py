@@ -1,65 +1,24 @@
-import numpy as np
 import matplotlib.pyplot as plt
-from ml.metric import LogLoss
 
-class LearningCurve:
-    def __init__(self, model_class, learning_rate, n_iterations, regularization, epochs, decay_type="none", decay_rate=0.01):
-        self.model_class = model_class
-        self.learning_rate = learning_rate
-        self.n_iterations = n_iterations
-        self.regularization = regularization
-        self.epochs = epochs
-        self.decay_type = decay_type
-        self.decay_rate = decay_rate
+def plot_learning_curves(train_losses, val_losses):
+    """
+    Plot the learning curves for training and validation loss across epochs.
 
-    def generate(self, X, y):
-        """Generates training and validation loss across epochs."""
-        train_losses = []
-        val_losses = []
+    Args:
+        train_losses (list): List of training loss values for each epoch.
+        val_losses (list): List of validation loss values for each epoch.
+    """
+    epochs = range(1, len(train_losses) + 1)
 
-        # Split data into training and validation sets
-        indices = np.random.permutation(len(X))
-        split_idx = int(len(X) * 0.8)  # 80% training, 20% validation
-        X_train, X_val = X[indices[:split_idx]], X[indices[split_idx:]]
-        y_train, y_val = y[indices[:split_idx]], y[indices[split_idx:]]
-
-        # Initialize the model
-        model = self.model_class(
-            learning_rate=self.learning_rate,
-            n_iterations=self.n_iterations,
-            regularization=self.regularization,
-            epochs=1,  # One epoch per iteration for tracking
-            decay_type=self.decay_type,
-            decay_rate=self.decay_rate,
-        )
-
-        for epoch in range(1, self.epochs + 1):
-            model.fit(X_train, y_train)  # Train for one epoch
-
-            # Calculate training and validation loss
-            train_loss = LogLoss()(y_train, model._sigmoid(np.dot(X_train, model.weights) + model.bias))
-            val_loss = LogLoss()(y_val, model._sigmoid(np.dot(X_val, model.weights) + model.bias))
-
-            train_losses.append(train_loss)
-            val_losses.append(val_loss)
-
-            # Optionally log progress
-            print(f"Epoch {epoch}/{self.epochs}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}")
-
-        return list(range(1, self.epochs + 1)), train_losses, val_losses
-
-
-
-def plot_learning_curves(epochs, train_losses, val_losses):
-    """Plots loss vs epoch."""
     plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_losses, label='Training Loss', color='blue', marker='o')
-    plt.plot(epochs, val_losses, label='Validation Loss', color='red', marker='o')
-    plt.title('Learning Curves (Loss vs Epoch)')
+    plt.plot(epochs, train_losses, label='Training Loss', marker='o', color='blue')
+    if val_losses:
+        plt.plot(epochs, val_losses, label='Validation Loss', marker='o', color='red')
+    plt.title('Learning Curves')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
     plt.savefig('./plots/learning_curves_epoch_loss.png')
-    plt.close()
+    plt.show()
