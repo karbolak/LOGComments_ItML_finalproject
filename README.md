@@ -20,13 +20,15 @@ TODO:
 - [x] introduced epochs
 - [ ] figure out artifact situation
 - [ ] add percentage progress during training
-- [ ] check what hyperparameter values are selected (print)
+- [x] check what hyperparameter values are selected (print)
 - [ ] check if changing accuracy to F1 will improve the results
-- [ ] introduce learning rate decay
+- [x] introduce learning rate decay
 - [ ] why constant loss over epochs
 - [ ] check different epoch numbers for main model and CV
 - [ ] check out Platt Scaling
 - [ ] change the LogReg treshold (see end of the file)
+- [ ] adjust possible hyper-parameter values based on logarithmic ranges around the best values
+- [ ] figure out the n_iterations (gradient) adjustment
 
 Cross-Validation Insights:
 
@@ -100,6 +102,18 @@ Confustion Matrix:
 [[315  43]
  [ 65 247]]
 
+W/ Learning decay:
+Model Performance Metrics:
+Accuracy: 0.8119
+Precision: 0.7925
+Recall: 0.8077
+F1 Score: 0.8000
+ROC-AUC: 0.8052
+Log Loss: 6.4954
+Confustion Matrix: 
+[[292  66]
+ [ 60 252]]
+
 
 ---------
 The percentage of all correct predictions (TP + TN) out of the total predictions
@@ -121,21 +135,21 @@ Confusion Matrix:
 ---------
 
 
+Cross-Validation Summary:
+Accuracy: Mean = 0.8181, Std = 0.0205
+Loss: Mean = 0.3926, Std = 0.0135
+
+Best Parameters:
+n_iterations: 1000
+learning_rate: 0.1
+regularization: 0.0
+decay_rate: 0.01
+decay_type: none
 
 ### Adjusting the Classification Threshold to Improve Recall
 
 The default threshold for logistic regression is 0.5, meaning predictions with probabilities ≥ 0.5 are classified as positive (e.g., bot). Lowering this threshold increases recall at the cost of precision, as more cases are classified as positive.
 
-#### Implementation Steps:
-1. **Modify the `predict` Method in Logistic Regression**:
-   - Add a `threshold` parameter to allow flexibility.
-
-```python
-def predict(self, X: np.ndarray, threshold=0.5) -> np.ndarray:
-    model = np.dot(X, self.weights) + self.bias
-    probabilities = self._sigmoid(model)
-    return np.where(probabilities >= threshold, 1, 0)
-```
 
 2. **Set a Lower Threshold**:
    - Test thresholds such as `0.4`, `0.3`, etc., to find an optimal balance between recall and precision.

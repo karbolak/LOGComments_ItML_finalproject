@@ -93,13 +93,18 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
     y_train = train_dataset[target_column].values
 
     # Cross-Validation
-    cross_validator = CrossValidator(n_splits=5)
+    cross_validator = cross_validator = CrossValidator()
+
     best_model, best_params, cv_summary = cross_validator.cross_validate(X_train, y_train)
 
     # Print Cross-Validation Results
     print("\nCross-Validation Summary:")
     for metric, stats in cv_summary.items():
         print(f"{metric.capitalize()}: Mean = {stats['mean']:.4f}, Std = {stats['std']:.4f}")
+    
+    print("\nBest Parameters:")
+    for param, value in best_params.items():
+        print(f"{param}: {value}")
 
     # Use best parameters for the final model
     print("\nTraining final Logistic Regression model with best parameters...")
@@ -107,7 +112,9 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
         learning_rate=best_params['learning_rate'],
         n_iterations=best_params['n_iterations'],
         regularization=best_params['regularization'],
-        epochs=10
+        epochs=10,
+        decay_type=best_params['decay_type'],
+        decay_rate=best_params['decay_rate'],
     )
     final_model.fit(X_train, y_train)
     print("Final model training complete.")
@@ -120,10 +127,12 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
         n_iterations=best_params['n_iterations'],
         regularization=best_params['regularization'],
         epochs=10,
+        decay_type=best_params['decay_type'],
+        decay_rate=best_params['decay_rate'],
     )
     
-    train_sizes, train_losses, val_losses = learning_curve.generate(X_train, y_train)
-    plot_learning_curves(train_sizes, train_losses, val_losses)
+    epochs, train_losses, val_losses = learning_curve.generate(X_train, y_train)
+    plot_learning_curves(epochs, train_losses, val_losses)
     
     # Prediction pipeline (rest of the existing code)
     print("\nSelect the prediction dataset:")

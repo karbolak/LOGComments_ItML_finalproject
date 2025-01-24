@@ -3,21 +3,23 @@ import matplotlib.pyplot as plt
 from ml.metric import LogLoss
 
 class LearningCurve:
-    def __init__(self, model_class, learning_rate, n_iterations, regularization, epochs):
+    def __init__(self, model_class, learning_rate, n_iterations, regularization, epochs, decay_type="none", decay_rate=0.01):
         self.model_class = model_class
         self.learning_rate = learning_rate
         self.n_iterations = n_iterations
         self.regularization = regularization
         self.epochs = epochs
+        self.decay_type = decay_type
+        self.decay_rate = decay_rate
 
     def generate(self, X, y):
         """Generates training and validation loss across epochs."""
         train_losses = []
         val_losses = []
 
-        # Split data into training and validation
+        # Split data into training and validation sets
         indices = np.random.permutation(len(X))
-        split_idx = int(len(X) * 0.8)  # 80% train, 20% validation
+        split_idx = int(len(X) * 0.8)  # 80% training, 20% validation
         X_train, X_val = X[indices[:split_idx]], X[indices[split_idx:]]
         y_train, y_val = y[indices[:split_idx]], y[indices[split_idx:]]
 
@@ -27,6 +29,8 @@ class LearningCurve:
             n_iterations=self.n_iterations,
             regularization=self.regularization,
             epochs=1,  # One epoch per iteration for tracking
+            decay_type=self.decay_type,
+            decay_rate=self.decay_rate,
         )
 
         for epoch in range(1, self.epochs + 1):
@@ -43,6 +47,7 @@ class LearningCurve:
             print(f"Epoch {epoch}/{self.epochs}: Train Loss = {train_loss:.4f}, Val Loss = {val_loss:.4f}")
 
         return list(range(1, self.epochs + 1)), train_losses, val_losses
+
 
 
 def plot_learning_curves(epochs, train_losses, val_losses):
