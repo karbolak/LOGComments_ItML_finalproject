@@ -25,6 +25,15 @@ We no longer rely on artifacts saved, we should fix it.
 We have to cleanup the whale of logreg, split in etc.
 Parameter tuning etc.
 
+Observations:
+-> Overfitting cannot be detected by analysis of non-loss values.
+-> regularisation hyperparameters have to be tuned during VC (e.g. k-fold)
+-> We compare validation/test loss and training loss
+
+Can we use LogLoss?
+
+
+
 
 Results from the first run:
 Accuracy: 0.77
