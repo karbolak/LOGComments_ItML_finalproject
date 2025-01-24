@@ -67,5 +67,4 @@ class CrossValidator:
             } for metric, values in metrics_summary.items()
         }
         
-        print(best_params, cv_summary)
         return best_model, best_params, cv_summary

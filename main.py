@@ -2,7 +2,6 @@ import os
 import pandas as pd
 from ml.cross_validation import CrossValidator
 from ml.learning_curve import LearningCurve, plot_learning_curves
-from ml.plotting import plot_cross_validation_results
 from ml.functional_feature import detect_feature_types
 from ml.logistic_regression import LogisticRegression
 from ml.metric import Accuracy, Precision, Recall, F1Score, ConfusionMatrix, ROCAUC, LogLoss
@@ -102,20 +101,29 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
     for metric, stats in cv_summary.items():
         print(f"{metric.capitalize()}: Mean = {stats['mean']:.4f}, Std = {stats['std']:.4f}")
 
-    # Visualize Cross-Validation Results
-    plot_cross_validation_results(cv_summary, output_path="./plots/cross_validation_results.png")
-    print("Cross-validation results plot saved to './plots/cross_validation_results.png'")
+    # Use best parameters for the final model
+    print("\nTraining final Logistic Regression model with best parameters...")
+    final_model = LogisticRegression(
+        learning_rate=best_params['learning_rate'],
+        n_iterations=best_params['n_iterations'],
+        regularization=best_params['regularization'],
+        epochs=10
+    )
+    final_model.fit(X_train, y_train)
+    print("Final model training complete.")
 
-    # Train final model
-    print("\nTraining final Logistic Regression model...")
-    model = LogisticRegression(learning_rate=0.01, n_iterations=1000)
-    model.fit(X_train, y_train)
 
     # Generate learning curve
-    learning_curve = LearningCurve(model_class=LogisticRegression, learning_rate=0.01, n_iterations=1000)
+    learning_curve = LearningCurve(
+        model_class=LogisticRegression,
+        learning_rate=best_params['learning_rate'],
+        n_iterations=best_params['n_iterations'],
+        regularization=best_params['regularization'],
+        epochs=10,
+    )
+    
     train_sizes, train_losses, val_losses = learning_curve.generate(X_train, y_train)
     plot_learning_curves(train_sizes, train_losses, val_losses)
-    
     
     # Prediction pipeline (rest of the existing code)
     print("\nSelect the prediction dataset:")
@@ -129,7 +137,7 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
         raise ValueError("Target column missing in the prediction dataset.")
 
     X_pred = preprocess_and_transform(prediction_dataset, input_features, train_artifacts, dataset_type="prediction")
-    predictions = model.predict(X_pred)
+    predictions = final_model.predict(X_pred)
 
     # Metrics calculation
     metrics_calculators = {
