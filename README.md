@@ -18,6 +18,7 @@ TODO:
 - [x] one-hot encoding not by sklearn
 - [x] regularisation to combat overfitting
 - [x] introduced epochs
+- [ ] figure out artifact situation
 - [ ] add percentage progress during training
 - [ ] check what hyperparameter values are selected (print)
 - [ ] check if changing accuracy to F1 will improve the results
