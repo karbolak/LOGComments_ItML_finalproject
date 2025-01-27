@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import product
-from ml.metric import Accuracy, LogLoss
+from ml.metric import F1Score, LogLoss
 from ml.logistic_regression import LogisticRegression
 
 class CrossValidator:
@@ -9,10 +9,11 @@ class CrossValidator:
         self.model_class = model_class
         self.param_grid = param_grid or {
             'n_iterations': [1000],
-            'learning_rate': [0.1],
-            'regularization': [0.0],
-            'decay_rate': [0.01],
-            'decay_type': ["none"],
+            'learning_rate': [0.01, 0.05, 0.1],
+            'regularization': [0.0, 0.1, 0.5],
+            'decay_rate': [0.01, 0.1, 0.2],
+            'decay_type': ["time", "exponential", "step", "none"],
+            'threshold': [0.5, 0.55, 0.6],
         }
         
             # 'n_iterations': [1000],
@@ -32,42 +33,44 @@ class CrossValidator:
 
     def cross_validate(self, X, y):
         best_model = None
-        best_params = None
+        best_hparams = None
         best_score = -float('inf')
         param_combinations = list(product(*self.param_grid.values()))
         param_names = list(self.param_grid.keys())
 
-        metrics_summary = {'accuracy': [], 'loss': []}
+        metrics_summary = {'F1Score': [], 'loss': []}
 
-        for params in param_combinations:
-            print(f"CrossValidating for parameters {params}.")
-            param_dict = dict(zip(param_names, params))
-            metrics = {'accuracy': [], 'loss': []}
+        for hparams in param_combinations:
+            print(f"CrossValidating for hyperparameters {hparams}.")
+            hparam_dict = dict(zip(param_names, hparams))
+            metrics = {'F1Score': [], 'loss': []}
 
             for train_idx, val_idx in self._stratified_split(X, y):
                 X_train, X_val = X[train_idx], X[val_idx]
                 y_train, y_val = y[train_idx], y[val_idx]
 
                 model = self.model_class(
-                    learning_rate=param_dict['learning_rate'],
-                    n_iterations=param_dict['n_iterations'],
-                    regularization=param_dict['regularization'],
-                    decay_type=param_dict['decay_type'],
-                    decay_rate=param_dict['decay_rate']
+                    learning_rate=hparam_dict['learning_rate'],
+                    n_iterations=hparam_dict['n_iterations'],
+                    regularization=hparam_dict['regularization'],
+                    decay_type=hparam_dict['decay_type'],
+                    decay_rate=hparam_dict['decay_rate'],
+                    threshold=hparam_dict['threshold']
                 )
                 model.fit(X_train, y_train)
 
                 predictions = model.predict(X_val)
-                metrics['accuracy'].append(Accuracy()(y_val, predictions))
+                f1_metric = F1Score()  # Instantiate the metric class
+                metrics['F1Score'].append(f1_metric(y_val, predictions))
                 metrics['loss'].append(LogLoss()(y_val, model._sigmoid(np.dot(X_val, model.weights) + model.bias)))
 
-            avg_accuracy = np.mean(metrics['accuracy'])
-            if avg_accuracy > best_score:
-                best_score = avg_accuracy
+            avg_F1Score = np.mean(metrics['F1Score'])
+            if avg_F1Score > best_score:
+                best_score = avg_F1Score
                 best_model = model
-                best_params = param_dict
+                best_hparams = hparam_dict
 
-            metrics_summary['accuracy'].extend(metrics['accuracy'])
+            metrics_summary['F1Score'].extend(metrics['F1Score'])
             metrics_summary['loss'].extend(metrics['loss'])
 
         cv_summary = {
@@ -75,5 +78,5 @@ class CrossValidator:
             for metric, values in metrics_summary.items()
         }
 
-        return best_model, best_params, cv_summary
+        return best_model, best_hparams, cv_summary
 

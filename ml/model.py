@@ -9,9 +9,9 @@ class Model(ABC):
     """Base class for all machine learning models."""
 
     def __init__(self, model_type: Literal["regression", "classification"],
-                 parameters: Optional[dict] = None):
+                 hyperparameters: Optional[dict] = None):
         self.type = model_type
-        self.parameters = parameters if parameters is not None else {}
+        self.hyperparameters = hyperparameters if hyperparameters is not None else {}
         self.trained = False  # Flag to indicate if the model has been trained
 
     @abstractmethod
@@ -47,17 +47,17 @@ class Model(ABC):
         Returns:
             Artifact: An artifact representing the model's state.
         """
-        # Serialize the model's parameters and type
+        # Serialize the model's hyperparameters and type
         data = {
             "type": self.type,
-            "parameters": self.parameters,
+            "hyperparameters": self.hyperparameters,
             "trained": self.trained
         }
         return Artifact(name=name, data=deepcopy(data), version="1.0.0",
                         type="model:base")
 
     def load_artifact(self, artifact: Artifact) -> None:
-        """Load model parameters from an artifact.
+        """Load model hyperparameters from an artifact.
 
         Args:
             artifact (Artifact): Artifact to load data from.
@@ -65,12 +65,12 @@ class Model(ABC):
         if artifact.type.startswith("model:"):
             data = artifact.data
             self.type = data.get("type", self.type)
-            self.parameters = data.get("parameters", {})
+            self.hyperparameters = data.get("hyperparameters", {})
             self.trained = data.get("trained", False)
         else:
             raise ValueError("Invalid artifact type. Expected a model "
                              "artifact.")
 
     def __str__(self) -> str:
-        return (f"Model(type={self.type}, trained={self.trained} parameters={
-                self.parameters})")
+        return (f"Model(type={self.type}, trained={self.trained} hyperparameters={
+                self.hyperparameters})")

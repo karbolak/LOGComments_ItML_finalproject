@@ -1,10 +1,10 @@
 import numpy as np
+from tqdm import trange
 from ml.model import Model
-
 
 class LogisticRegression(Model):
     def __init__(self, learning_rate=0.01, n_iterations=1000, regularization=0.0,
-                 epochs=1, decay_type="none", decay_rate=0.01):
+                 epochs=1, decay_type="none", decay_rate=0.01, threshold=0.5):
         """
         Logistic Regression model with learning rate decay.
         
@@ -25,6 +25,7 @@ class LogisticRegression(Model):
         self.decay_rate = decay_rate
         self.weights = None
         self.bias = None
+        self.threshold = threshold
         
     def _update_learning_rate(self, t):
         """Update the learning rate using the specified decay type."""
@@ -37,14 +38,15 @@ class LogisticRegression(Model):
         elif self.decay_type == "none":
             return self.learning_rate 
 
-    def fit(self, X: np.ndarray, y: np.ndarray, validation_data=None):
+    def fit(self, X: np.ndarray, y: np.ndarray, validation_data=None, patience=1):
         """
-        Fit the logistic regression model to the training data and optionally track validation loss.
+        Fit the logistic regression model with optional early stopping.
 
         Args:
-            X (np.ndarray): Feature matrix of shape (n_samples, n_features).
-            y (np.ndarray): Target vector of shape (n_samples,).
-            validation_data (tuple): Optional (X_val, y_val) for tracking validation loss.
+            X (np.ndarray): Training feature matrix.
+            y (np.ndarray): Training target vector.
+            validation_data (tuple): Optional (X_val, y_val) for validation loss tracking.
+            patience (int): Number of epochs to wait for improvement before stopping.
         """
         if y.ndim > 1 and y.shape[1] == 2:
             y = y[:, 1]  # Convert one-hot to single-class labels if necessary
@@ -53,39 +55,58 @@ class LogisticRegression(Model):
         self.weights = np.zeros(n_features)
         self.bias = 0
 
-        self.train_losses = []  # Store training loss for each epoch
-        self.val_losses = []    # Store validation loss for each epoch (if validation data is provided)
+        # Initialize the progress bar for epochs
+        progress_bar = trange(self.epochs, desc="Training Progress", unit="epoch")
 
-        for epoch in range(self.epochs):
+        self.train_losses = []  # Track training loss
+        self.val_losses = []    # Track validation loss
+
+        best_val_loss = float('inf')
+        epochs_without_improvement = 0
+
+        for epoch in progress_bar:
             for iteration in range(self.n_iterations):
-                t = epoch * self.n_iterations + iteration  # Total iteration count
+                t = epoch * self.n_iterations + iteration
                 current_lr = self._update_learning_rate(t)
 
                 model = np.dot(X, self.weights) + self.bias
-                predictions = self._sigmoid(model)
+                probabilities = self._sigmoid(model)
+                
+                # Apply the threshold to compute binary predictions
+                predictions = np.where(probabilities >= self.threshold, 1, 0)
 
-                # Compute gradients with L2 regularization
+                # Compute gradients with binary predictions
                 dw = (1 / n_samples) * np.dot(X.T, (predictions - y)) + self.regularization * self.weights
                 db = (1 / n_samples) * np.sum(predictions - y)
 
-                # Update weights and bias using the current learning rate
+                # Update weights and bias
                 self.weights -= current_lr * dw
                 self.bias -= current_lr * db
 
-            # Compute and log training loss
-            train_loss = self._compute_loss(y, self._sigmoid(np.dot(X, self.weights) + self.bias))
+            # Compute training loss with thresholded probabilities
+            train_loss = self._compute_loss(y, np.where(self._sigmoid(np.dot(X, self.weights) + self.bias) >= self.threshold, 1, 0))
             self.train_losses.append(train_loss)
+            progress_bar.set_postfix(loss=f"{train_loss:.4f}")
 
-            # Compute and log validation loss (if provided)
+            # Compute validation loss (if provided)
             if validation_data is not None:
                 X_val, y_val = validation_data
-                val_loss = self._compute_loss(y_val, self._sigmoid(np.dot(X_val, self.weights) + self.bias))
+                val_probabilities = self._sigmoid(np.dot(X_val, self.weights) + self.bias)
+                val_predictions = np.where(val_probabilities >= self.threshold, 1, 0)
+                val_loss = self._compute_loss(y_val, val_predictions)
                 self.val_losses.append(val_loss)
-                print(f"Epoch {epoch + 1}/{self.epochs} - Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}")
-            else:
-                print(f"Epoch {epoch + 1}/{self.epochs} - Train Loss: {train_loss:.4f}")
 
-        self.trained = True
+                # Check for improvement
+                if val_loss < best_val_loss:
+                    best_val_loss = val_loss
+                    epochs_without_improvement = 0
+                else:
+                    epochs_without_improvement += 1
+
+                # Early stopping
+                if epochs_without_improvement >= patience:
+                    print(f"Early stopping at epoch {epoch + 1}. Best Val Loss: {best_val_loss:.4f}")
+                    break
 
 
     def _compute_loss(self, y, predictions):
@@ -97,7 +118,7 @@ class LogisticRegression(Model):
     def _sigmoid(self, x):
         return 1 / (1 + np.exp(-x))
 
-    def predict(self, X: np.ndarray, threshold=0.5) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         """
         Predict class labels for the input data.
 
@@ -110,4 +131,4 @@ class LogisticRegression(Model):
         """
         model = np.dot(X, self.weights) + self.bias
         probabilities = self._sigmoid(model)
-        return np.where(probabilities >= threshold, 1, 0)
+        return np.where(probabilities >= self.threshold, 1, 0)

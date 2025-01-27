@@ -53,6 +53,35 @@ def train_validation_split(X, y, val_size=0.2, random_seed=42):
 
     return X_train, X_val, y_train, y_val
 
+def stratified_train_validation_split(X, y, val_size=0.2, random_seed=42):
+    """
+    Perform a one-time stratified split of the dataset into training and validation sets.
+
+    Args:
+        X (np.ndarray): Feature matrix.
+        y (np.ndarray): Target vector.
+        val_size (float): Proportion of the data to use as validation (0 < val_size < 1).
+        random_seed (int): Random seed for reproducibility.
+
+    Returns:
+        tuple: (X_train, X_val, y_train, y_val)
+    """
+    np.random.seed(random_seed)
+    pos_indices = np.where(y == 1)[0]
+    neg_indices = np.where(y == 0)[0]
+
+    pos_split = int(len(pos_indices) * (1 - val_size))
+    neg_split = int(len(neg_indices) * (1 - val_size))
+
+    train_indices = np.concatenate([pos_indices[:pos_split], neg_indices[:neg_split]])
+    val_indices = np.concatenate([pos_indices[pos_split:], neg_indices[neg_split:]])
+
+    np.random.shuffle(train_indices)
+    np.random.shuffle(val_indices)
+
+    return X[train_indices], X[val_indices], y[train_indices], y[val_indices]
+
+
 
 def preprocess_and_transform(dataset, input_features, train_artifacts, dataset_type="training"):
     """Preprocess and transform features using artifacts."""
@@ -122,30 +151,30 @@ def run_pipeline(directory="datasets", artifacts_dir="artifacts"):
     # Cross-Validation
     cross_validator = cross_validator = CrossValidator()
 
-    best_model, best_params, cv_summary = cross_validator.cross_validate(X_train, y_train)
+    best_model, best_hparams, cv_summary = cross_validator.cross_validate(X_train, y_train)
 
     # Print Cross-Validation Results
     print("\nCross-Validation Summary:")
     for metric, stats in cv_summary.items():
         print(f"{metric.capitalize()}: Mean = {stats['mean']:.4f}, Std = {stats['std']:.4f}")
     
-    print("\nBest Parameters:")
-    for param, value in best_params.items():
+    print("\nBest Hyperparameters:")
+    for param, value in best_hparams.items():
         print(f"{param}: {value}")
 
-    # Use best parameters for the final model
-    print("\nTraining final Logistic Regression model with best parameters...")
+    # Use best hyperparameters for the final model
+    print("\nTraining final Logistic Regression model with best hyperparameters...")
     # Split the dataset for validation during final training
-    X_train, X_val, y_train, y_val = train_validation_split(X_train, y_train, val_size=0.2)
-
+    X_train, X_val, y_train, y_val = stratified_train_validation_split(X_train, y_train, val_size=0.2)
     # Train the final model
     final_model = LogisticRegression(
-        learning_rate=best_params['learning_rate'],
-        n_iterations=best_params['n_iterations'],
-        regularization=best_params['regularization'],
+        learning_rate=best_hparams['learning_rate'],
+        n_iterations=best_hparams['n_iterations'],
+        regularization=best_hparams['regularization'],
         epochs=10,
-        decay_type=best_params['decay_type'],
-        decay_rate=best_params['decay_rate']
+        decay_type=best_hparams['decay_type'],
+        decay_rate=best_hparams['decay_rate'],
+        threshold=best_hparams['threshold']
     )
     final_model.fit(X_train, y_train, validation_data=(X_val, y_val))
     print("Final model training complete.")

@@ -24,11 +24,12 @@ TODO:
 - [ ] check if changing accuracy to F1 will improve the results
 - [x] introduce learning rate decay
 - [ ] why constant loss over epochs
-- [ ] check different epoch numbers for main model and CV
+- [x] check different epoch numbers for main model and CV
 - [ ] check out Platt Scaling
-- [ ] change the LogReg treshold (see end of the file)
-- [ ] adjust possible hyper-parameter values based on logarithmic ranges around the best values
+- [ ] change the LogReg threshold (see end of the file)
+- [ ] adjust possible hyperparameter values based on logarithmic ranges around the best values
 - [ ] figure out the n_iterations (gradient) adjustment
+- [x] early stopping
 
 Cross-Validation Insights:
 
@@ -150,7 +151,7 @@ Cross-Validation Summary:
 Accuracy: Mean = 0.8181, Std = 0.0205
 Loss: Mean = 0.3926, Std = 0.0135
 
-Best Parameters:
+Best Hyperparameters:
 n_iterations: 1000
 learning_rate: 0.1
 regularization: 0.0
@@ -217,7 +218,7 @@ def fit(self, X: np.ndarray, y: np.ndarray, class_weights=None):
      - Example: `class_weights = {0: 1.0, 1: len(y) / np.sum(y)}` (inverse frequency).
 
 3. **Fit the Model with Weights**:
-   - Call `fit` with the `class_weights` parameter.
+   - Call `fit` with the `class_weights` hyperparameter.
 
 ---
 
@@ -237,9 +238,9 @@ For the best results:
 # Training with class weights
 class_weights = {0: 1.0, 1: len(y_train) / np.sum(y_train)}
 final_model = LogisticRegression(
-    learning_rate=best_params['learning_rate'],
-    n_iterations=best_params['n_iterations'],
-    regularization=best_params['regularization']
+    learning_rate=best_hparams['learning_rate'],
+    n_iterations=best_hparams['n_iterations'],
+    regularization=best_hparams['regularization']
 )
 final_model.fit(X_train, y_train, class_weights=class_weights)
 
