@@ -25,7 +25,7 @@ class Precision(Metric):
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         true_positives = np.sum((y_pred == 1) & (y_true == 1))
         predicted_positives = np.sum(y_pred == 1)
-        return true_positives / predicted_positives if predicted_positives > 0 else 0.0
+        return true_positives / predicted_positives if true_positives != predicted_positives and predicted_positives > 0 else 0.0
 
 class Recall(Metric):
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -45,7 +45,7 @@ class ConfusionMatrix(Metric):
         false_positives = np.sum((y_pred == 1) & (y_true == 0))
         true_negatives = np.sum((y_pred == 0) & (y_true == 0))
         false_negatives = np.sum((y_pred == 0) & (y_true == 1))
-        return np.array([[true_negatives, false_positives], [false_negatives, true_positives]])
+        return np.array([[f"TN:{true_negatives}", f"FP:{false_positives}"], [f"FN:{false_negatives}", f"TP:{true_positives}"]])
 
 class ROCAUC(Metric):
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:

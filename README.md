@@ -1,151 +1,80 @@
-# LOGComments_ItML_finalproject
+# Introduction to Machine Learning - final project
 
-Base is oop project at an early stage, most of it is useless (see the whole app subfolder) but I did not want to bother with removing it and fixing the errors, that can be done later.
+## TODO:
+- [ ] populate README.md
+- [ ] add docstrings
+- [ ] typehints
+
+## How to run
 
 ```console
 python main.py
 ```
 
-will run the Logistic regression interface I wrote that allows the basic functioning needed for our purposes.
+will run the Logistic regression interface. The program does not require scikit-learn for functioning, all requirements can be found [`requirements.txt`](requirements.txt).
 
-The folder **datasets** should be populated with any datasets we want to use, as the program will ask for its contents, and also the final results will be stored there.
+The folder [`/datasets/`](/datasets/) should be populated with any datasets we want to use, as the program will ask for its contents, and also the final results will be stored there. The default names of the datasets will be defined in [`data_manipulation.py`](/ml/data_manipulation.py).
 
-TODO:
-- [x] Validation / Cross-Validation
-- [x] detect overfitting / underfitting
-- [x] Metrics
-- [x] Codebase cleanup
-- [x] one-hot encoding not by sklearn
-- [x] regularisation to combat overfitting
-- [x] introduced epochs
-- [ ] figure out artifact situation
-- [ ] add percentage progress during training
-- [x] check what hyperparameter values are selected (print)
-- [ ] check if changing accuracy to F1 will improve the results
-- [x] introduce learning rate decay
-- [ ] why constant loss over epochs
-- [x] check different epoch numbers for main model and CV
-- [ ] check out Platt Scaling
-- [ ] change the LogReg threshold (see end of the file)
-- [ ] adjust possible hyperparameter values based on logarithmic ranges around the best values
-- [ ] figure out the n_iterations (gradient) adjustment
-- [x] early stopping
+The graph of the learning curves is saved in [`/plots/`](/plots/) directory. It will be overwritten with each run.
 
-Cross-Validation Insights:
+In [`hyperparameter_choice.py`](/ml/hyperparameter_choice.py) you can choose whether to go through all different hyperparameter combinations during hyperparameter tuning, or to follow the best hyperparameters we found by uncommenting the option at the end of the file (optimization is the default option):
 
-    The best results were achieved with higher learning rates (0.1) and no regularization (0.0), suggesting that over-regularization harms model performance.
-    Additional tuning of n_iterations or introducing learning rate decay could further improve performance.
-
-Learning Curve Issue:
-
-    The constant loss values across epochs suggest:
-        Validation set may overlap with the training set.
-        Lack of proper splitting in the LearningCurve class or insufficient samples for validation.
-    Solution: Ensure the validation set is strictly separated and contains sufficient samples.
-
-Log Loss Concern:
-
-    High log loss (5.5675) during prediction indicates poorly calibrated probabilities.
-    Solution: Use probability calibration methods (e.g., Platt Scaling) before converting probabilities to binary predictions.
-
-Model Strengths and Weaknesses:
-
-    Strengths: High accuracy and precision indicate the model is effective at identifying non-bots.
-    Weaknesses: Moderate recall and high false negatives suggest the model struggles with detecting all bots.
-    Solution: Adjust the classification threshold to improve recall, or use class-weighted loss to penalize misclassified bot cases.
+```python
+# Uncomment if you don't want to use optimization and use best hyperparameters instead
+# HPARAMS = BEST_HPARAMS
+```
 
 
+## Structure of the codebase:
+.
+├── datasets
+│   ├── predictions_with_results.csv
+│   ├── TEST.csv
+│   └── TRAIN.csv
+├── main.py
+├── ml
+│   ├── cross_validation.py
+│   ├── data_manipulation.py
+│   ├── data_processing.py
+│   ├── hyperparameter_choice.py
+│   ├── hyperparameter_tuning.py
+│   ├── learning_curve.py
+│   ├── logistic_regression.py
+│   ├── metric.py
+│   ├── one_hot_encoder.py
+│   └── trainer.py
+├── plots
+│   └── learning_curves_epoch_loss.png
+├── README.md
+└── requirements.txt
 
 
-Results from the first run:
-Accuracy: 0.77
-Precision: 0.75
-Recall: 0.78
-F1 Score: 0.76
-ROC-AUC: 0.77
-Log Loss: 7.84
-Confusion Matrix:
-[[276  82]
- [ 70 242]]
+## Description of codebase:
 
-Results after deuselessification:
-Accuracy: 0.77
-Precision: 0.75
-Recall: 0.77
-F1 Score: 0.76
-ROC-AUC: 0.77
-Log Loss: 7.89
-Confusion Matrix:
-[[276  82]
- [ 71 241]]
-
-After first regularization:
-Model Performance Metrics:
-Accuracy: 0.8239
-Precision: 0.8070
-Recall: 0.8173
-F1 Score: 0.8121
-ROC-AUC: 0.8122
-Log Loss: 6.0830
-Confustion Matrix: 
-[[297  61]
- [ 57 255]]
-
-After introducing epochs:
-Model Performance Metrics:
-Accuracy: 0.8388
-Precision: 0.8517
-Recall: 0.7917
-F1 Score: 0.8206
-ROC-AUC: 0.8306
-Log Loss: 5.5675
-Confustion Matrix: 
-[[315  43]
- [ 65 247]]
-
-W/ Learning decay:
-Model Performance Metrics:
-Accuracy: 0.8119
-Precision: 0.7925
-Recall: 0.8077
-F1 Score: 0.8000
-ROC-AUC: 0.8052
-Log Loss: 6.4954
-Confustion Matrix: 
-[[292  66]
- [ 60 252]]
-
-Model Performance Metrics:
-Accuracy: 0.8433
-Precision: 0.8657
-Recall: 0.7853
-F1 Score: 0.8235
-ROC-AUC: 0.8413
-Log Loss: 5.4128
-Confustion Matrix: 
-[[320  38]
- [ 67 245]]
+### cross_validation.py
 
 
----------
-The percentage of all correct predictions (TP + TN) out of the total predictions
----------
-Precision -> Out of all predicted positives, x% were actually positive.
----------
-Recall -> Out of all actual positives, x% were correctly identified.
----------
-F1 Score -> The harmonic mean of precision and recall.
----------
-ROC-AUC -> Measures the ability of your model to separate classes. A score of 0.5 means random guessing, and closer to 1 is better.
----------
-Log Loss -> The penalty for how far off your predicted probabilities are from the true labels. 0.1 - 1 is normal
----------
-Confusion Matrix:
-    confusion_matrix
-    [TP   FP]"
-    [FP   FN]
----------
+### data_processing.py
 
+
+### learning_curve.py
+
+
+### logistic_regression.py
+
+
+### metric.py
+
+
+### one_hot_encoder.py
+
+
+
+## Machine learning concepts used:
+
+### Feature normalization
+
+### Balanced splitting of dataset
 
 Cross-Validation Summary:
 Accuracy: Mean = 0.8181, Std = 0.0205
@@ -158,18 +87,7 @@ regularization: 0.0
 decay_rate: 0.01
 decay_type: none
 
-### Adjusting the Classification Threshold to Improve Recall
 
-The default threshold for logistic regression is 0.5, meaning predictions with probabilities ≥ 0.5 are classified as positive (e.g., bot). Lowering this threshold increases recall at the cost of precision, as more cases are classified as positive.
-
-
-2. **Set a Lower Threshold**:
-   - Test thresholds such as `0.4`, `0.3`, etc., to find an optimal balance between recall and precision.
-
-3. **Evaluate the Model**:
-   - Use metrics like precision, recall, F1 score, and confusion matrix for each threshold to decide on the best trade-off.
-
----
 
 ### Using Class-Weighted Loss to Penalize Misclassified `bot` Cases
 
@@ -253,7 +171,60 @@ for threshold in thresholds:
     print(f"Threshold: {threshold} - Recall: {recall:.4f}, Precision: {precision:.4f}")
 ```
 
----
 
-Let me know if you'd like help implementing this or analyzing the results!
+The collection of best hyperparameters so far:
 
+Best Hyperparameters:
+n_iterations: 5000
+learning_rate: 0.1
+regularization: 0.0001
+decay_rate: 0.006
+decay_type: time
+
+Model Performance Metrics:
+Accuracy: 0.7511
+Precision: 0.7624
+Recall: 0.6509
+F1 Score: 0.7023
+ROC-AUC: 0.8833
+Log Loss: 0.4967
+Confusion Matrix: 
+[[215  43]
+ [ 74 138]]
+
+Best Hyperparameters:
+n_iterations: 2000
+learning_rate: 0.1
+regularization: 0.0001
+decay_rate: 0.01
+decay_type: time
+
+Model Performance Metrics:
+Accuracy: 0.7830
+Precision: 0.7037
+Recall: 0.8962
+F1 Score: 0.7884
+ROC-AUC: 0.8285
+Log Loss: 0.4945
+Confusion Matrix: 
+[[178  80]
+ [ 22 190]]
+
+Best Hyperparameters:
+n_iterations: 5000
+learning_rate: 0.05
+regularization: 0.001
+l1_ratio: 0.2
+decay_rate: 0.006
+decay_type: time
+
+Model Performance Metrics:
+Accuracy: 0.7809
+Precision: 0.7026
+Recall: 0.8915
+F1 Score: 0.7859
+ROC-AUC: 0.8275
+Log Loss: 0.4948
+Confusion Matrix: 
+[['TN:178' 'FP:80']
+ ['FN:23' 'TP:189']]
