@@ -1,9 +1,12 @@
 import os
 import pandas as pd
+import numpy as np
 
-def auto_select_dataset(directory="datasets"):
+
+def auto_select_dataset(directory: str = "datasets") -> tuple:
     """
-    Automatically selects TRAIN.csv for training and TEST.csv for testing inside the datasets folder.
+    Automatically selects TRAIN.csv for training and TEST.csv for testing
+    inside the datasets folder.
 
     Args:
         directory (str): The directory containing datasets.
@@ -15,11 +18,13 @@ def auto_select_dataset(directory="datasets"):
     test_path = os.path.join(directory, "TEST.csv")
 
     if not os.path.exists(train_path):
-        raise FileNotFoundError(f"TRAIN.csv not found in {directory}. Ensure the dataset is available.")
-    
+        raise FileNotFoundError(f"TRAIN.csv not found in {directory}. Ensure "
+                                f"the dataset is available.")
+
     if not os.path.exists(test_path):
-        raise FileNotFoundError(f"TEST.csv not found in {directory}. Ensure the dataset is available.")
-    
+        raise FileNotFoundError(f"TEST.csv not found in {directory}. Ensure "
+                                f"the dataset is available.")
+
     return train_path, test_path
 
 
@@ -38,7 +43,8 @@ def load_dataset(file_path):
 def select_and_load_datasets(directory):
     """Select and load training and testing datasets."""
     train_dataset_path, test_dataset_path = auto_select_dataset(directory)
-    print(f"Automatically selected:\n - Training dataset: {train_dataset_path}\n - Testing dataset: {test_dataset_path}")
+    print(f"Automatically selected:\n - Training dataset: {train_dataset_path}"
+          f"\n - Testing dataset: {test_dataset_path}")
 
     train_dataset = load_dataset(train_dataset_path)
     test_dataset = load_dataset(test_dataset_path)
@@ -47,13 +53,26 @@ def select_and_load_datasets(directory):
     print(f"\nAutomatically selected target feature: {target_column}")
 
     if train_dataset[target_column].nunique() != 2:
-        raise ValueError("Target feature must be binary for Logistic Regression.")
+        raise ValueError("Target feature must be binary for Logistic "
+                         "Regression.")
 
     return train_dataset, test_dataset, target_column
 
 
-def save_predictions(test_dataset, predictions, target_column, directory):
-    """Save predictions to a CSV file."""
+def save_predictions(test_dataset: pd.DataFrame, predictions: np.ndarray,
+                     target_column: str, directory: str) -> None:
+    """Save predictions to a CSV file.
+
+    Args:
+        test_dataset (pd.DataFrame): Testing dataset.
+        predictions (np.ndarray): Predictions on the test dataset.
+        target_column (str): Name of the target column.
+        directory (str): Directory to save the predictions.
+
+    Returns:
+        None
+    """
+
     test_dataset[target_column] = predictions
     output_file = os.path.join(directory, "predictions_with_results.csv")
     test_dataset.to_csv(output_file, index=False)

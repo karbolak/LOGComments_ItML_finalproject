@@ -1,12 +1,20 @@
 import numpy as np
 
+
 class OneHotEncoder:
-    """Custom implementation of OneHotEncoder."""
+    """Custom implementation of OneHotEncoder.
+
+    Attributes:
+        categories_ (dict): Dictionary containing unique categories for each
+        column.
+        unseen_category_ (str): Placeholder for unseen categories.
+    """
+
     def __init__(self):
         self.categories_ = {}
         self.unseen_category_ = "<UNSEEN>"
 
-    def fit(self, X):
+    def fit(self, X: np.ndarray) -> None:
         """Fits the encoder to the unique categories in X.
 
         Args:
@@ -19,9 +27,10 @@ class OneHotEncoder:
             # Convert all values to string for consistent comparison
             column_data = X[:, col].astype(str)
             unique_values = np.unique(column_data)
-            self.categories_[col] = np.append(unique_values, self.unseen_category_)
+            self.categories_[col] = np.append(unique_values,
+                                              self.unseen_category_)
 
-    def transform(self, X):
+    def transform(self, X: np.ndarray) -> np.ndarray:
         """Transforms the input data into one-hot encoded format.
 
         Args:
@@ -56,7 +65,7 @@ class OneHotEncoder:
         # Concatenate all encoded columns
         return np.hstack(encoded_arrays)
 
-    def fit_transform(self, X):
+    def fit_transform(self, X: np.ndarray) -> np.ndarray:
         """Fits the encoder and transforms the input data.
 
         Args:

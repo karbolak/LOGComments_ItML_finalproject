@@ -8,10 +8,13 @@ from ml.data_manipulation import save_predictions, select_and_load_datasets
 def run_pipeline(directory="datasets"):
     """Runs an automated pipeline for Logistic Regression."""
     # Step 1: Select and load datasets
-    train_dataset, test_dataset, target_column = select_and_load_datasets(directory)
+    train_dataset, test_dataset, target_column = select_and_load_datasets(
+        directory)
 
     # Step 2: Preprocess datasets
-    X_train, X_test, y_train, y_test = preprocess_datasets(train_dataset, test_dataset, target_column)
+    X_train, X_test, y_train, y_test = preprocess_datasets(train_dataset,
+                                                           test_dataset,
+                                                           target_column)
 
     # Step 3: Import hyperparameter grid
     HPARAM_GRID = HPARAMS
@@ -27,6 +30,7 @@ def run_pipeline(directory="datasets"):
 
     # Step 7: Save predictions
     save_predictions(test_dataset, predictions, target_column, directory)
-    
+
+
 if __name__ == "__main__":
     run_pipeline()

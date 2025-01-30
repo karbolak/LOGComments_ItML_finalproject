@@ -3,17 +3,20 @@ import pandas as pd
 from ml.one_hot_encoder import OneHotEncoder
 
 
-def detect_feature_types(df, threshold=2):
+def detect_feature_types(df: pd.DataFrame, threshold: int = 2) -> dict:
     """
     Detects numerical and categorical features.
 
     Args:
         df (pd.DataFrame): The dataset.
-        threshold (int): Max unique values for a numeric column to be categorical.
+        threshold (int): Max unique values for a numeric column to be
+        categorical.
 
     Returns:
-        dict: {"categorical": list of categorical features, "numerical": list of numerical features}
+        dict: {"categorical": list of categorical features, "numerical": list
+        of numerical features}
     """
+
     categorical_features = []
     numerical_features = []
 
@@ -26,24 +29,32 @@ def detect_feature_types(df, threshold=2):
         else:
             categorical_features.append(column)
 
-    return {"categorical": categorical_features, "numerical": numerical_features}
+    return {"categorical": categorical_features,
+            "numerical": numerical_features}
 
 
-def preprocess_data(df, feature_types, fit_encoders=True, encoders=None, stats=None):
+def preprocess_data(df: pd.DataFrame, feature_types: dict,
+                    fit_encoders: bool = True, encoders: dict = None,
+                    stats: dict = None):
     """
-    Preprocess dataset: applies one-hot encoding to categorical features and Z-score normalization to numerical features.
+    Preprocess dataset: applies one-hot encoding to categorical features and
+    Z-score normalization to numerical features.
 
     Args:
         df (pd.DataFrame): The dataset.
-        feature_types (dict): Categorized feature names {"categorical": [...], "numerical": [...]}
+        feature_types (dict): Categorized feature names {"categorical": [...],
+                                                         "numerical": [...]}
         fit_encoders (bool): Whether to fit new OneHotEncoders.
         encoders (dict): Pre-fitted encoders for transformation.
-        stats (dict): Dictionary containing precomputed mean and std for numerical features.
+        stats (dict): Dictionary containing precomputed mean and std for
+        numerical features.
 
     Returns:
         np.ndarray: Processed feature matrix.
-        dict: Fitted encoders if `fit_encoders=True`, otherwise returns unchanged.
-        dict: Fitted mean and std values if `fit_encoders=True`, otherwise returns unchanged.
+        dict: Fitted encoders if `fit_encoders=True`, otherwise returns
+        unchanged.
+        dict: Fitted mean and std values if `fit_encoders=True`, otherwise
+        returns unchanged.
     """
     processed_frames = []
     encoders = encoders or {}
@@ -60,15 +71,18 @@ def preprocess_data(df, feature_types, fit_encoders=True, encoders=None, stats=N
             encoder = encoders.get(feature)
             if encoder is None:
                 raise ValueError(f"No encoder found for feature '{feature}'.")
-        
+
         # Ensure test data doesn't introduce unseen categories
         for i, value in enumerate(column_data):
-            if value not in encoder.categories_[0]:  # Check against trained categories
+            # Check against trained categories
+            if value not in encoder.categories_[0]:
                 column_data[i] = encoder.unseen_category_
 
         transformed_data = encoder.transform(column_data)
-        expanded_columns = [f"{feature}_{i}" for i in range(transformed_data.shape[1])]
-        processed_frames.append(pd.DataFrame(transformed_data, columns=expanded_columns))
+        expanded_columns = [f"{feature}_{i}" for i in range(
+            transformed_data.shape[1])]
+        processed_frames.append(pd.DataFrame(transformed_data,
+                                columns=expanded_columns))
 
     # Standardize numerical features (Z-score normalization)
     for feature in feature_types["numerical"]:
@@ -79,16 +93,19 @@ def preprocess_data(df, feature_types, fit_encoders=True, encoders=None, stats=N
             stats[feature] = (mean, std)
         else:
             if feature not in stats:
-                raise ValueError(f"No scaling parameters found for feature '{feature}'.")
+                raise ValueError(f"No scaling parameters found for feature"
+                                 f" '{feature}'.")
 
             mean, std = stats[feature]
 
         if std == 0:
             std = 1  # Prevent division by zero
         standardized_data = (column_data - mean) / std
-        processed_frames.append(pd.DataFrame(standardized_data, columns=[feature]))
+        processed_frames.append(pd.DataFrame(standardized_data,
+                                columns=[feature]))
 
-    return np.hstack([frame.values for frame in processed_frames]), encoders, stats
+    return np.hstack([frame.values for frame in processed_frames]
+                     ), encoders, stats
 
 
 def stratified_train_validation_split(X, y, val_size=0.2, random_seed=42):
@@ -100,8 +117,10 @@ def stratified_train_validation_split(X, y, val_size=0.2, random_seed=42):
     pos_split = int(len(pos_indices) * (1 - val_size))
     neg_split = int(len(neg_indices) * (1 - val_size))
 
-    train_indices = np.concatenate([pos_indices[:pos_split], neg_indices[:neg_split]])
-    val_indices = np.concatenate([pos_indices[pos_split:], neg_indices[neg_split:]])
+    train_indices = np.concatenate([pos_indices[:pos_split],
+                                    neg_indices[:neg_split]])
+    val_indices = np.concatenate([pos_indices[pos_split:],
+                                  neg_indices[neg_split:]])
 
     np.random.shuffle(train_indices)
     np.random.shuffle(val_indices)
@@ -122,9 +141,12 @@ def preprocess_datasets(train_dataset, test_dataset, target_column):
     y_test = test_dataset[target_column].values
 
     # Preprocess TRAINING dataset (fit encoders & compute stats)
-    X_train, encoders, stats = preprocess_data(X_train_raw, feature_types, fit_encoders=True)
+    X_train, encoders, stats = preprocess_data(X_train_raw, feature_types,
+                                               fit_encoders=True)
 
     # Preprocess TEST dataset (reuse encoders & scaling stats)
-    X_test, _, _ = preprocess_data(X_test_raw, feature_types, fit_encoders=False, encoders=encoders, stats=stats)
+    X_test, _, _ = preprocess_data(X_test_raw, feature_types,
+                                   fit_encoders=False, encoders=encoders,
+                                   stats=stats)
 
     return X_train, X_test, y_train, y_test
