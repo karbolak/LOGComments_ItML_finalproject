@@ -19,7 +19,7 @@ def run_pipeline(directory="datasets"):
     # Step 3: Import hyperparameter grid
     HPARAM_GRID = HPARAMS
 
-    # Step 4: Perform hyperparameter tuning
+    # Step 4: Perform hyperparameter tuning + cross-validation
     best_hparams = tune_hyperparameters(X_train, y_train, HPARAM_GRID)
 
     # Step 5: Train final model
