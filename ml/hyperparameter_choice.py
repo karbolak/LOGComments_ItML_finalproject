@@ -29,4 +29,4 @@ BEST_HPARAMS: Dict[str, List[Union[int, float, str]]] = {
 HPARAMS: Dict[str, List[Union[int, float, str]]] = HPARAMS_FOR_OPTIMIZATION
 
 # Uncomment to use best hyperparameters instead of running the optimization
-HPARAMS = BEST_HPARAMS
+# HPARAMS = BEST_HPARAMS

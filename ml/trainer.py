@@ -6,7 +6,8 @@ from ml.metric import (Accuracy, Precision, Recall, F1Score, ConfusionMatrix,
                        ROCAUC, LogLoss)
 
 
-def train_final_model(X_train, y_train, best_hparams) -> LogisticRegression:
+def train_final_model(X_train: np.ndarray, y_train: np.ndarray,
+                      best_hparams: dict) -> LogisticRegression:
     """Train the final model with the best hyperparameters.
 
     Args:
@@ -14,9 +15,9 @@ def train_final_model(X_train, y_train, best_hparams) -> LogisticRegression:
         y_train (np.ndarray): Training target.
         best_hparams (dict): Best hyperparameters.
 
-        Returns:
-            LogisticRegression: Trained model.
-        """
+    Returns:
+        LogisticRegression: Trained model.
+    """
 
     X_train, X_val, y_train, y_val = stratified_train_validation_split(
         X_train, y_train, val_size=0.2)
@@ -53,7 +54,7 @@ def evaluate_model(final_model, X_test: np.ndarray, y_test: np.ndarray
         np.ndarray: Predictions on the test dataset."""
 
     print("\nEvaluating the model on the test dataset...")
-    
+
     predictions = final_model.predict(X_test, y_val=y_test)
 
     metrics_calculators = {
