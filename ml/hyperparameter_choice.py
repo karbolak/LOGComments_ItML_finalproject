@@ -18,10 +18,10 @@ HPARAMS_FOR_OPTIMIZATION: Dict[str, List[Union[int, float, str]]] = {
 # Dictionary containing the best hyperparameters found
 BEST_HPARAMS: Dict[str, List[Union[int, float, str]]] = {
     'n_iterations': [5000],
-    'learning_rate': [0.1],
+    'learning_rate': [0.05],
     'regularization': [0.001],
-    'l1_ratio': [0],
-    'decay_rate': [0.5],
+    'l1_ratio': [0.2],
+    'decay_rate': [0.006],
     'decay_type': ["time"],
 }
 
